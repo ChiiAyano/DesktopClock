@@ -32,6 +32,10 @@ namespace DesktopClock
         {
             services.AddTransient<MainWindow>();
             services.AddTransient<ViewModels.MainPageViewModel>();
+
+            services.AddSingleton<NotifyIcon>();
+            services.AddSingleton<General>();
+            services.AddSingleton<StartupRegister>();
         }
 
         protected override void OnExit(ExitEventArgs e)

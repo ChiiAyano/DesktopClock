@@ -22,6 +22,7 @@ namespace DesktopClock
         private readonly MainPageViewModel _viewModel;
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _windowClickableMenuItem = new("クリック有効 (&C)");
+        private readonly ToolStripMenuItem _startupRegisterMenuItem = new("スタートアップ (&S)");
         private readonly ToolStripMenuItem _closeMenuItem = new("終了 (&E)");
 
         public MainWindow(MainPageViewModel viewModel)
@@ -101,15 +102,33 @@ namespace DesktopClock
                 }
             };
 
+            _startupRegisterMenuItem.Click += (_, _) =>
+            {
+                if (_viewModel.IsStartupRegistered())
+                {
+                    _viewModel.UnregisterStartup();
+                    _startupRegisterMenuItem.Checked = false;
+                }
+                else
+                {
+                    _viewModel.RegisterStartup();
+                    _startupRegisterMenuItem.Checked = true;
+                }
+            };
+
             _closeMenuItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
 
             contextMenu.Items.Add(_windowClickableMenuItem);
+            contextMenu.Items.Add(_startupRegisterMenuItem);
             contextMenu.Items.Add(new ToolStripSeparator());
             contextMenu.Items.Add(_closeMenuItem);
             _notifyIcon.ContextMenuStrip = contextMenu;
 
             // 透過状態チェック
             _windowClickableMenuItem.Checked = IsWindowClickTransparent();
+
+            // スタートアップ登録状態チェック
+            _startupRegisterMenuItem.Checked = _viewModel.IsStartupRegistered();
         }
 
         private bool IsWindowClickTransparent()

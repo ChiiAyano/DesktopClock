@@ -10,6 +10,8 @@ public class MainPageViewModel
     private readonly ReactiveTimer _clock = new(TimeSpan.FromSeconds(0.1));
     private static readonly Assembly _assembly = Assembly.GetExecutingAssembly();
 
+    private readonly StartupRegister _startupRegister;
+
     public string? WindowTitle => _assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
 
     private ReactiveProperty<DateTimeOffset> Current { get; }
@@ -17,8 +19,10 @@ public class MainPageViewModel
     public ReactiveProperty<double> MinuteAngle { get; }
     public ReactiveProperty<double> SecondAngle { get; }
 
-    public MainPageViewModel()
+    public MainPageViewModel(StartupRegister startupRegister)
     {
+        _startupRegister = startupRegister;
+
         this.Current = _clock
             .Select(_ => DateTimeOffset.Now)
             .ToReactiveProperty(DateTimeOffset.Now);
@@ -36,5 +40,20 @@ public class MainPageViewModel
             .ToReactiveProperty();
 
         _clock.Start();
+    }
+
+    public void RegisterStartup()
+    {
+        _startupRegister.Register();
+    }
+
+    public void UnregisterStartup()
+    {
+        _startupRegister.Unregister();
+    }
+
+    public bool IsStartupRegistered()
+    {
+        return _startupRegister.IsRegistered();
     }
 }
