@@ -1,5 +1,6 @@
 ﻿using Reactive.Bindings;
 using Reactive.Bindings.TinyLinq;
+using System.Reactive.Subjects;
 using System.Reflection;
 
 namespace DesktopClock.ViewModels;
@@ -9,12 +10,18 @@ public class MainPageViewModel
     private readonly ReactiveTimer _clock = new(TimeSpan.FromSeconds(0.1));
     private static readonly Assembly _assembly = Assembly.GetExecutingAssembly();
 
+    private readonly ISubject<MessengerMessage> _messageSubject = new Subject<MessengerMessage>();
+
     public string? WindowTitle => _assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
 
     private ReactiveProperty<DateTimeOffset> Current { get; }
     public ReactiveProperty<double> HourAngle { get; }
     public ReactiveProperty<double> MinuteAngle { get; }
     public ReactiveProperty<double> SecondAngle { get; }
+
+    public ReactiveCommand HideWindowFrameCommand { get; } = new();
+
+    public IObservable<MessengerMessage> MessageStream => _messageSubject;
 
     public MainPageViewModel()
     {
@@ -35,5 +42,7 @@ public class MainPageViewModel
             .ToReactiveProperty();
 
         _clock.Start();
+
+        this.HideWindowFrameCommand.Subscribe(_ => _messageSubject.OnNext(MessengerMessage.HideWindowFrame));
     }
 }

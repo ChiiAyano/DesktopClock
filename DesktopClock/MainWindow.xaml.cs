@@ -1,4 +1,7 @@
 ﻿using DesktopClock.ViewModels;
+using Reactive.Bindings.Extensions;
+using System.ComponentModel;
+using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Interop;
 using Windows.Win32;
@@ -13,6 +16,8 @@ namespace DesktopClock
     public partial class MainWindow : Window
     {
         private const int WindowOffset = 20;
+        private static readonly CompositeDisposable CompositeDisposable = new();
+
         private readonly MainPageViewModel _viewModel;
         private readonly NotifyIcon _notifyIcon;
 
@@ -31,6 +36,7 @@ namespace DesktopClock
             };
 
             CreateNotifyIcon();
+            InitializeObservable();
 
             this.Loaded += OnMainWindowLoad;
         }
@@ -57,16 +63,62 @@ namespace DesktopClock
             this.Top = workingArea.Bottom - height - WindowOffset;
         }
 
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            e.Cancel = true;
+
+            base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            CompositeDisposable.Dispose();
+
+            base.OnClosed(e);
+        }
+
+        private void InitializeObservable()
+        {
+            _viewModel.MessageStream
+                .Subscribe(message =>
+                {
+                    if (message == MessengerMessage.HideWindowFrame)
+                    {
+                        HideWindowFrame();
+                    }
+                }).AddTo(CompositeDisposable);
+        }
+
         private void CreateNotifyIcon()
         {
             // コンテキストメニュー作成
             var contextMenu = new ContextMenuStrip();
+            var showWindowFrameItem = new ToolStripMenuItem("ウィンドウフレームを表示 (&S)");
             var closeMenuItem = new ToolStripMenuItem("終了 (&E)");
+
+            showWindowFrameItem.Click += (_, _) => ShowWindowFrame();
 
             closeMenuItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
 
+            contextMenu.Items.Add(showWindowFrameItem);
+            contextMenu.Items.Add(new ToolStripSeparator());
             contextMenu.Items.Add(closeMenuItem);
             _notifyIcon.ContextMenuStrip = contextMenu;
+        }
+
+        private void ShowWindowFrame()
+        {
+            this.ShowInTaskbar = true;
+            this.WindowStyle = WindowStyle.SingleBorderWindow;
+            this.ResizeMode = ResizeMode.CanResize;
+            Show();
+        }
+
+        private void HideWindowFrame()
+        {
+            this.ShowInTaskbar = false;
+            this.WindowStyle = WindowStyle.None;
+            this.ResizeMode = ResizeMode.NoResize;
         }
     }
 }
