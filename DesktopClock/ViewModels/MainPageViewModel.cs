@@ -7,7 +7,7 @@ namespace DesktopClock.ViewModels;
 public class MainPageViewModel
 {
     private readonly ReactiveTimer _clock = new(TimeSpan.FromSeconds(0.1));
-    private readonly Assembly _assembly = Assembly.GetExecutingAssembly();
+    private static readonly Assembly _assembly = Assembly.GetExecutingAssembly();
 
     public string? WindowTitle => _assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
 
