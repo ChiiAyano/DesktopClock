@@ -17,7 +17,6 @@ namespace DesktopClock
     public partial class MainWindow : Window
     {
         private const int WindowOffset = 20;
-        private static readonly CompositeDisposable CompositeDisposable = new();
 
         private readonly MainPageViewModel _viewModel;
         private readonly NotifyIcon _notifyIcon;
@@ -74,13 +73,6 @@ namespace DesktopClock
             e.Cancel = true;
 
             base.OnClosing(e);
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            CompositeDisposable.Dispose();
-
-            base.OnClosed(e);
         }
 
         private void CreateNotifyIcon()
