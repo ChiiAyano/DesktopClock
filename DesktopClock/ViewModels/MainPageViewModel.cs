@@ -11,17 +11,21 @@ public class MainPageViewModel
     private static readonly Assembly _assembly = Assembly.GetExecutingAssembly();
 
     private readonly StartupRegister _startupRegister;
+    private readonly General _general;
 
-    public string? WindowTitle => _assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
+    public string WindowTitle { get; }
 
     private ReactiveProperty<DateTimeOffset> Current { get; }
     public ReactiveProperty<double> HourAngle { get; }
     public ReactiveProperty<double> MinuteAngle { get; }
     public ReactiveProperty<double> SecondAngle { get; }
 
-    public MainPageViewModel(StartupRegister startupRegister)
+    public MainPageViewModel(StartupRegister startupRegister, General general)
     {
         _startupRegister = startupRegister;
+        _general = general;
+
+        this.WindowTitle = _general.ApplicationName;
 
         this.Current = _clock
             .Select(_ => DateTimeOffset.Now)
