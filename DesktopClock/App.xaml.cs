@@ -30,6 +30,13 @@ namespace DesktopClock
             services.AddTransient<MainWindow>();
             services.AddTransient<ViewModels.MainPageViewModel>();
         }
+
+        protected override void OnExit(ExitEventArgs e)
+        {
+            _serviceProvider.Dispose();
+
+            base.OnExit(e);
+        }
     }
 
 }
