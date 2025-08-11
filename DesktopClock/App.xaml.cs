@@ -10,15 +10,18 @@ namespace DesktopClock
     {
         private ServiceProvider _serviceProvider;
 
-        protected override void OnStartup(StartupEventArgs e)
+        public App()
         {
-            base.OnStartup(e);
-
             // DIセットアップ
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
 
             _serviceProvider = serviceCollection.BuildServiceProvider();
+        }
+
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
 
             // メインウィンドウの表示
             var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
