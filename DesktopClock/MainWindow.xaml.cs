@@ -54,6 +54,5 @@ namespace DesktopClock
             //    Icon = SystemIcons.Application,
             //    Text = ,
             //}
-        }
     }
 }
