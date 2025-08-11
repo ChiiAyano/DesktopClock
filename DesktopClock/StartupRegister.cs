@@ -2,20 +2,14 @@
 using System.Reflection;
 
 namespace DesktopClock;
-public class StartupRegister
+public class StartupRegister(General general)
 {
     private const string RegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private readonly General _general;
-
-    public StartupRegister(General general)
-    {
-        _general = general;
-    }
 
     public void Register()
     {
         // アプリケーション名を取得
-        var appName = _general.ApplicationName;
+        var appName = general.ApplicationName;
         // スタートアップレジストリキーを取得
         using var key = Registry.CurrentUser.CreateSubKey(RegistryPath);
 
@@ -28,7 +22,7 @@ public class StartupRegister
     public void Unregister()
     {
         // アプリケーション名を取得
-        var appName = _general.ApplicationName;
+        var appName = general.ApplicationName;
         // スタートアップレジストリキーを取得
         using var key = Registry.CurrentUser.CreateSubKey(RegistryPath);
         // スタートアップから削除
@@ -38,7 +32,7 @@ public class StartupRegister
     public bool IsRegistered()
     {
         // アプリケーション名を取得
-        var appName = _general.ApplicationName;
+        var appName = general.ApplicationName;
         // スタートアップレジストリキーを取得
         using var key = Registry.CurrentUser.OpenSubKey(RegistryPath);
         // アプリケーションが登録されているか確認

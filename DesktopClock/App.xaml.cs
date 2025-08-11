@@ -33,8 +33,9 @@ namespace DesktopClock
             services.AddTransient<MainWindow>();
             services.AddTransient<ViewModels.MainPageViewModel>();
 
-            services.AddSingleton<NotifyIcon>();
             services.AddSingleton<General>();
+            services.AddSingleton<SettingManager>();
+            services.AddSingleton<NotifyIcon>();
             services.AddSingleton<StartupRegister>();
         }
 
