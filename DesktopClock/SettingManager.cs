@@ -17,20 +17,27 @@ public class SettingManager(General general)
     private const string SettingsFileName = "settings.json";
     private string SettingsFilePath => Path.Combine(general.ApplicationRootPath, SettingsFileName);
 
+    public SettingModel? Setting { get; private set; }
+
     public async Task<SettingModel> LoadSettingsAsync()
     {
+        if (this.Setting is not null)
+        {
+            return this.Setting;
+        }
+
         if (!File.Exists(SettingsFilePath))
         {
-            return new SettingModel();
+            return this.Setting = new SettingModel();
         }
 
         await using var stream = new FileStream(SettingsFilePath, FileMode.Open, FileAccess.Read);
-        return await JsonSerializer.DeserializeAsync<SettingModel>(stream) ?? new SettingModel();
+        return this.Setting = await JsonSerializer.DeserializeAsync<SettingModel>(stream) ?? new SettingModel();
     }
 
-    public async Task SaveSettingsAsync(SettingModel settings)
+    public async Task SaveSettingsAsync()
     {
         await using var stream = new FileStream(SettingsFilePath, FileMode.Create, FileAccess.Write);
-        await JsonSerializer.SerializeAsync(stream, settings);
+        await JsonSerializer.SerializeAsync(stream, this.Setting);
     }
 }

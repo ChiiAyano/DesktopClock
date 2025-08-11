@@ -1,7 +1,5 @@
 ﻿using DesktopClock.ViewModels;
-using Reactive.Bindings.Extensions;
 using System.ComponentModel;
-using System.Reactive.Disposables;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -19,13 +17,15 @@ namespace DesktopClock
         private const int WindowOffset = 20;
 
         private readonly MainPageViewModel _viewModel;
+        private readonly SettingManager _settingManager;
         private readonly NotifyIcon _notifyIcon;
         private readonly ToolStripMenuItem _windowClickableMenuItem = new("クリック有効 (&C)");
         private readonly ToolStripMenuItem _startupRegisterMenuItem = new("スタートアップ (&S)");
         private readonly ToolStripMenuItem _closeMenuItem = new("終了 (&E)");
 
-        public MainWindow(MainPageViewModel viewModel)
+        public MainWindow(MainPageViewModel viewModel, SettingManager settingManager)
         {
+            _settingManager = settingManager;
             _viewModel = viewModel;
             this.DataContext = _viewModel;
 
@@ -44,21 +44,10 @@ namespace DesktopClock
         }
 
         private void OnMainWindowLoad(object sender, RoutedEventArgs e)
-        {
+        { 
             WindowClickTransparencyState(true);
 
-            // ウィンドウを右下に配置
-            var screen = Screen.PrimaryScreen;
-            if (screen is null)
-            {
-                return;
-            }
-
-            var workingArea = screen.WorkingArea;
-            var (width, height) = (this.Width, this.Height);
-
-            this.Left = workingArea.Right - width - WindowOffset;
-            this.Top = workingArea.Bottom - height - WindowOffset;
+            SetWindowPosition();
         }
 
         protected override void OnMouseDown(MouseButtonEventArgs e)
@@ -68,11 +57,64 @@ namespace DesktopClock
             base.OnMouseDown(e);
         }
 
+        protected override void OnMouseUp(MouseButtonEventArgs e)
+        {
+            var settings = _settingManager.Setting;
+            if (settings is not null)
+            {
+                // マウスアップ時にウィンドウ位置を保存
+                settings.WindowLeft = this.Left;
+                settings.WindowTop = this.Top;
+            }
+
+            base.OnMouseUp(e);
+        }
+
         protected override void OnClosing(CancelEventArgs e)
         {
             e.Cancel = true;
 
             base.OnClosing(e);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            var settings = _settingManager.Setting;
+            if (settings is not null)
+            {
+                // ウィンドウ位置を保存
+                settings.WindowLeft = this.Left;
+                settings.WindowTop = this.Top;
+            }
+
+            base.OnClosed(e);
+        }
+
+        private void SetWindowPosition()
+        {
+            var settings = _settingManager.Setting;
+
+            if (settings?.WindowLeft is null || settings.WindowTop is null)
+            {
+                // ウィンドウを右下に配置
+                var screen = Screen.PrimaryScreen;
+                if (screen is null)
+                {
+                    return;
+                }
+
+                var workingArea = screen.WorkingArea;
+                var (width, height) = (this.Width, this.Height);
+
+                this.Left = workingArea.Right - width - WindowOffset;
+                this.Top = workingArea.Bottom - height - WindowOffset;
+            }
+            else
+            {
+                // 設定がある場合はその位置に配置
+                this.Left = settings.WindowLeft.Value;
+                this.Top = settings.WindowTop.Value;
+            }
         }
 
         private void CreateNotifyIcon()
