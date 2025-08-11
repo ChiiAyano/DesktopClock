@@ -41,5 +41,14 @@ namespace DesktopClock
             this.Left = workingArea.Right - width - WindowOffset;
             this.Top = workingArea.Bottom - height - WindowOffset;
         }
+
+        private void CreateNotificationIcon()
+        {
+            //var notification = new NotifyIcon
+            //{
+            //    Icon = SystemIcons.Application,
+            //    Text = ,
+            //}
+        }
     }
 }

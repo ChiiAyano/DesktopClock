@@ -1,11 +1,15 @@
 ﻿using Reactive.Bindings;
 using Reactive.Bindings.TinyLinq;
+using System.Reflection;
 
 namespace DesktopClock.ViewModels;
 
 internal class MainPageViewModel
 {
     private readonly ReactiveTimer _clock = new(TimeSpan.FromSeconds(0.1));
+    private readonly Assembly _assembly = Assembly.GetExecutingAssembly();
+
+    public string? WindowTitle => _assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
 
     private ReactiveProperty<DateTimeOffset> Current { get; }
     public ReactiveProperty<double> HourAngle { get; }
