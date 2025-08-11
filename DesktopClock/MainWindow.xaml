@@ -10,10 +10,7 @@
         AllowsTransparency="True"
         Topmost="True"
         Background="Transparent"
-        Title="DesktopClock" Height="300" Width="300">
-    <Window.DataContext>
-        <vm:MainPageViewModel/>
-    </Window.DataContext>
+        Title="{Binding WindowTitle}" Height="300" Width="300">
     <Grid>
         <Image Source="/clockface.png" />
         <Viewbox>
