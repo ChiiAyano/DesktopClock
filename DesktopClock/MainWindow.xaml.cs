@@ -14,6 +14,7 @@ namespace DesktopClock
     {
         private const int WindowOffset = 20;
         private readonly MainPageViewModel _viewModel;
+        private readonly NotifyIcon _notifyIcon;
 
         public MainWindow(MainPageViewModel viewModel)
         {
@@ -22,7 +23,16 @@ namespace DesktopClock
 
             InitializeComponent();
 
-            this.Loaded += OnMainWindowLoad;    
+            _notifyIcon = new NotifyIcon
+            {
+                Icon = SystemIcons.Application,
+                Text = _viewModel.WindowTitle,
+                Visible = true
+            };
+
+            CreateNotifyIcon();
+
+            this.Loaded += OnMainWindowLoad;
         }
 
         private void OnMainWindowLoad(object sender, RoutedEventArgs e)
@@ -41,17 +51,22 @@ namespace DesktopClock
             }
 
             var workingArea = screen.WorkingArea;
-            var(width, height) = (this.Width, this.Height);
+            var (width, height) = (this.Width, this.Height);
 
             this.Left = workingArea.Right - width - WindowOffset;
             this.Top = workingArea.Bottom - height - WindowOffset;
         }
 
-        private void CreateNotificationIcon()
+        private void CreateNotifyIcon()
         {
-            //var notification = new NotifyIcon
-            //{
-            //    Icon = SystemIcons.Application,
-            //    Text = ,
-            //}
+            // コンテキストメニュー作成
+            var contextMenu = new ContextMenuStrip();
+            var closeMenuItem = new ToolStripMenuItem("終了 (&E)");
+
+            closeMenuItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
+
+            contextMenu.Items.Add(closeMenuItem);
+            _notifyIcon.ContextMenuStrip = contextMenu;
+        }
+    }
 }
