@@ -19,26 +19,49 @@ namespace DesktopClock
             _serviceProvider = serviceCollection.BuildServiceProvider();
         }
 
-        protected override void OnStartup(StartupEventArgs e)
+        protected override async void OnStartup(StartupEventArgs e)
         {
-            base.OnStartup(e);
+            try
+            {
+                base.OnStartup(e);
 
-            // メインウィンドウの表示
-            var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
-            mainWindow.Show();
+                await _serviceProvider.GetRequiredService<SettingManager>().LoadSettingsAsync();
+
+                // メインウィンドウの表示
+                var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
+                mainWindow.Show();
+            }
+            catch (Exception ex)
+            {
+                throw; // TODO handle exception
+            }
         }
 
         private void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<MainWindow>();
             services.AddTransient<ViewModels.MainPageViewModel>();
+
+            services.AddSingleton<General>();
+            services.AddSingleton<SettingManager>();
+            services.AddSingleton<NotifyIcon>();
+            services.AddSingleton<StartupRegister>();
         }
 
-        protected override void OnExit(ExitEventArgs e)
+        protected override async void OnExit(ExitEventArgs e)
         {
-            _serviceProvider.Dispose();
+            try
+            {
+                await _serviceProvider.GetRequiredService<SettingManager>().SaveSettingsAsync();
+                await _serviceProvider.DisposeAsync();
 
-            base.OnExit(e);
+                base.OnExit(e);
+            }
+            catch (Exception ex)
+            {
+                // TODO: handle exception
+                throw;
+            }
         }
     }
 
