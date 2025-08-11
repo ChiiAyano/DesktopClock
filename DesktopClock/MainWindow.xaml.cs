@@ -3,6 +3,7 @@ using Reactive.Bindings.Extensions;
 using System.ComponentModel;
 using System.Reactive.Disposables;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -20,6 +21,8 @@ namespace DesktopClock
 
         private readonly MainPageViewModel _viewModel;
         private readonly NotifyIcon _notifyIcon;
+        private readonly ToolStripMenuItem _windowClickableMenuItem = new("クリック有効 (&C)");
+        private readonly ToolStripMenuItem _closeMenuItem = new("終了 (&E)");
 
         public MainWindow(MainPageViewModel viewModel)
         {
@@ -36,18 +39,13 @@ namespace DesktopClock
             };
 
             CreateNotifyIcon();
-            InitializeObservable();
 
             this.Loaded += OnMainWindowLoad;
         }
 
         private void OnMainWindowLoad(object sender, RoutedEventArgs e)
         {
-            var hwnd = new HWND(new WindowInteropHelper(this).Handle);
-            var extendedStyle = (WINDOW_EX_STYLE)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
-
-            // ウィンドウに対するクリック操作を透過
-            _ = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)(extendedStyle | WINDOW_EX_STYLE.WS_EX_TRANSPARENT));
+            WindowClickTransparencyState(true);
 
             // ウィンドウを右下に配置
             var screen = Screen.PrimaryScreen;
@@ -61,6 +59,13 @@ namespace DesktopClock
 
             this.Left = workingArea.Right - width - WindowOffset;
             this.Top = workingArea.Bottom - height - WindowOffset;
+        }
+
+        protected override void OnMouseDown(MouseButtonEventArgs e)
+        {
+            DragMove();
+
+            base.OnMouseDown(e);
         }
 
         protected override void OnClosing(CancelEventArgs e)
@@ -77,48 +82,58 @@ namespace DesktopClock
             base.OnClosed(e);
         }
 
-        private void InitializeObservable()
-        {
-            _viewModel.MessageStream
-                .Subscribe(message =>
-                {
-                    if (message == MessengerMessage.HideWindowFrame)
-                    {
-                        HideWindowFrame();
-                    }
-                }).AddTo(CompositeDisposable);
-        }
-
         private void CreateNotifyIcon()
         {
             // コンテキストメニュー作成
             var contextMenu = new ContextMenuStrip();
-            var showWindowFrameItem = new ToolStripMenuItem("ウィンドウフレームを表示 (&S)");
-            var closeMenuItem = new ToolStripMenuItem("終了 (&E)");
 
-            showWindowFrameItem.Click += (_, _) => ShowWindowFrame();
+            _windowClickableMenuItem.Click += (_, _) =>
+            {
+                if (IsWindowClickTransparent())
+                {
+                    WindowClickTransparencyState(false);
+                    _windowClickableMenuItem.Checked = true;
+                }
+                else
+                {
+                    WindowClickTransparencyState(true);
+                    _windowClickableMenuItem.Checked = false;
+                }
+            };
 
-            closeMenuItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
+            _closeMenuItem.Click += (_, _) => System.Windows.Application.Current.Shutdown();
 
-            contextMenu.Items.Add(showWindowFrameItem);
+            contextMenu.Items.Add(_windowClickableMenuItem);
             contextMenu.Items.Add(new ToolStripSeparator());
-            contextMenu.Items.Add(closeMenuItem);
+            contextMenu.Items.Add(_closeMenuItem);
             _notifyIcon.ContextMenuStrip = contextMenu;
+
+            // 透過状態チェック
+            _windowClickableMenuItem.Checked = IsWindowClickTransparent();
         }
 
-        private void ShowWindowFrame()
+        private bool IsWindowClickTransparent()
         {
-            this.ShowInTaskbar = true;
-            this.WindowStyle = WindowStyle.SingleBorderWindow;
-            this.ResizeMode = ResizeMode.CanResize;
-            Show();
+            var hwnd = new HWND(new WindowInteropHelper(this).Handle);
+            var extendedStyle = (WINDOW_EX_STYLE)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+            return (extendedStyle & WINDOW_EX_STYLE.WS_EX_TRANSPARENT) != 0;
         }
 
-        private void HideWindowFrame()
+        private void WindowClickTransparencyState(bool enable)
         {
-            this.ShowInTaskbar = false;
-            this.WindowStyle = WindowStyle.None;
-            this.ResizeMode = ResizeMode.NoResize;
+            var hwnd = new HWND(new WindowInteropHelper(this).Handle);
+            var extendedStyle = (WINDOW_EX_STYLE)PInvoke.GetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE);
+
+            if (enable)
+            {
+                // ウィンドウのクリック透過を有効
+                _ = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)(extendedStyle | WINDOW_EX_STYLE.WS_EX_TRANSPARENT));
+            }
+            else
+            {
+                // ウィンドウのクリック透過を無効
+                _ = PInvoke.SetWindowLong(hwnd, WINDOW_LONG_PTR_INDEX.GWL_EXSTYLE, (int)(extendedStyle & ~WINDOW_EX_STYLE.WS_EX_TRANSPARENT));
+            }
         }
     }
 }
