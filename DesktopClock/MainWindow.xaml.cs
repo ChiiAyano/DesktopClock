@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using DesktopClock.ViewModels;
+using System.Windows;
 using System.Windows.Interop;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -12,9 +13,13 @@ namespace DesktopClock
     public partial class MainWindow : Window
     {
         private const int WindowOffset = 20;
+        private readonly MainPageViewModel _viewModel;
 
-        public MainWindow()
+        public MainWindow(MainPageViewModel viewModel)
         {
+            _viewModel = viewModel;
+            this.DataContext = _viewModel;
+
             InitializeComponent();
 
             this.Loaded += OnMainWindowLoad;    

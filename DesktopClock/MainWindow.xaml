@@ -11,9 +11,6 @@
         Topmost="True"
         Background="Transparent"
         Title="{Binding WindowTitle}" Height="300" Width="300">
-    <Window.DataContext>
-        <vm:MainPageViewModel/>
-    </Window.DataContext>
     <Grid>
         <Image Source="/clockface.png" />
         <Viewbox>

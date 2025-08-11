@@ -4,7 +4,7 @@ using System.Reflection;
 
 namespace DesktopClock.ViewModels;
 
-internal class MainPageViewModel
+public class MainPageViewModel
 {
     private readonly ReactiveTimer _clock = new(TimeSpan.FromSeconds(0.1));
     private readonly Assembly _assembly = Assembly.GetExecutingAssembly();
