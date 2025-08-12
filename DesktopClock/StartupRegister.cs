@@ -14,7 +14,7 @@ public class StartupRegister(General general)
         using var key = Registry.CurrentUser.CreateSubKey(RegistryPath);
 
         // アプリケーションのパスを取得
-        var appPath = Assembly.GetExecutingAssembly().Location;
+        var appPath = general.ExecutingAssemblyPath;
         // スタートアップに登録
         key.SetValue(appName, appPath);
     }
