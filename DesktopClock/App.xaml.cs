@@ -27,13 +27,16 @@ namespace DesktopClock
 
                 await _serviceProvider.GetRequiredService<SettingManager>().LoadSettingsAsync();
 
+                await _serviceProvider.GetRequiredService<Logger>().CollectAsync();
+
                 // メインウィンドウの表示
                 var mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
                 mainWindow.Show();
             }
             catch (Exception ex)
             {
-                throw; // TODO handle exception
+                await _serviceProvider.GetRequiredService<Logger>().LogAsync($"[{ex.GetType()}] {ex.Message}\n{ex.StackTrace}");
+                throw;
             }
         }
 
@@ -43,6 +46,7 @@ namespace DesktopClock
             services.AddTransient<ViewModels.MainPageViewModel>();
 
             services.AddSingleton<General>();
+            services.AddSingleton<Logger>();
             services.AddSingleton<SettingManager>();
             services.AddSingleton<NotifyIcon>();
             services.AddSingleton<StartupRegister>();
@@ -59,7 +63,7 @@ namespace DesktopClock
             }
             catch (Exception ex)
             {
-                // TODO: handle exception
+                await _serviceProvider.GetRequiredService<Logger>().LogAsync($"[{ex.GetType()}] {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }
