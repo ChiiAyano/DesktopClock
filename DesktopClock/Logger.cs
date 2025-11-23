@@ -1,18 +1,22 @@
-﻿using System.Globalization;
-using System.IO;
+﻿using System.IO;
 using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace DesktopClock;
 
-internal class Logger(General general)
+internal class Logger(General general) : IDisposable
 {
     private string LogDirectoryPath => Path.Combine(general.ApplicationRootPath, "logs");
     private string LogFilePath => Path.Combine(LogDirectoryPath, $"log_{DateTimeOffset.Now:yyyyMMdd}.txt");
 
+    private readonly SemaphoreSlim _loggerSemaphore = new(1, 1);
+    private readonly SemaphoreSlim _collectorSemaphore = new(1, 1);
+
     public async Task LogAsync(string message, [CallerMemberName] string callerName = "")
     {
+        await _loggerSemaphore.WaitAsync();
+
         try
         {
             if (!Directory.Exists(LogDirectoryPath))
@@ -27,10 +31,16 @@ internal class Logger(General general)
         {
             // ログの書き込みに失敗してもアプリケーションの動作を妨げない
         }
+        finally
+        {
+            _loggerSemaphore.Release();
+        }
     }
 
     public async Task CollectAsync()
     {
+        await _collectorSemaphore.WaitAsync();
+
         // 前月のログはZIP圧縮して保存する
         try
         {
@@ -55,11 +65,26 @@ internal class Logger(General general)
                 return;
             }
 
-            using var zipArchive = ZipFile.Open(logFilePath, ZipArchiveMode.Create);
-            foreach (var logFile in logFiles)
+            try
             {
-                var entryName = Path.GetFileName(logFile);
-                zipArchive.CreateEntryFromFile(logFile, entryName);
+                using var zipArchive = ZipFile.Open(logFilePath, ZipArchiveMode.Create);
+                foreach (var logFile in logFiles)
+                {
+                    var entryName = Path.GetFileName(logFile);
+                    zipArchive.CreateEntryFromFile(logFile, entryName);
+                }
+            }
+            catch (Exception ex)
+            {
+                await LogAsync($"ログの圧縮に失敗しました: {ex.GetType()} - {ex.Message}");
+
+                // 圧縮に失敗した場合は途中でできたZIPファイルを削除
+                if (File.Exists(logFilePath))
+                {
+                    File.Delete(logFilePath);
+                }
+
+                return;
             }
 
             // Delete log files only after the archive is successfully created and closed
@@ -72,5 +97,23 @@ internal class Logger(General general)
         {
             // ログの収集に失敗してもアプリケーションの動作を妨げない
         }
+        finally
+        {
+            _collectorSemaphore.Release();
+        }
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _loggerSemaphore.Dispose();
+            _collectorSemaphore.Dispose();
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
     }
 }
